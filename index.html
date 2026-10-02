@@ -511,16 +511,11 @@
         // 4. تعابير الوجه
         if (data.ملخص_تحليل_تعبير_الوجه) {
             const facial = data.ملخص_تحليل_تعبير_الوجه;
-            document.getElementById('resFaceDominant').innerText = facial.العاطفة_الرئيسية_السائدة || "محايد";
-            
-            const distList = document.getElementById('resFaceDist');
-            distList.innerHTML = '';
-            
-            if (facial.توزيع_النسب_المئوية_للإيماءات) {
-                for (const [emo, pct] of Object.entries(facial.توزيع_النسب_المئوية_للإيماءات)) {
-                    const li = document.createElement('li');
-                    li.innerText = `• ${emo}: ${pct}%`;
-                    distList.appendChild(li);
+            document.getElementById('resFaceDominant').innerHTML = `
+                <strong>العاطفة:</strong> ${facial.العاطفة_الرئيسية_السائدة} <br>
+                <strong>العمر التقريبي:</strong> ${facial.العمر_التقريبي} سنة <br>
+                <strong>الجنس:</strong> ${facial.الجنس} <br>
+                <strong>العرق / الملامح:</strong> ${facial.العرق_التطابق} `;
                 }
             }
         }
