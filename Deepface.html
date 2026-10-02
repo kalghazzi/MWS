@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منظومة تحليل الفيديو متعدد الوسائط</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #0f172a;
+            --border-color: #e2e8f0;
+            --error-color: #ef4444;
+            --success-color: #22c55e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            direction: rtl;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--border-color);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+
+        h2 {
+            font-size: 1.25rem;
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        input[type="text"], input[type="file"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 1rem;
+            direction: ltr;
+            text-align: left;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            background-color: #e2e8f0;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .tab-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .media-container {
+            width: 100%;
+            max-width: 640px;
+            height: 360px;
+            background-color: #000;
+            margin: 0 auto 15px auto;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-danger { background-color: var(--error-color); color: white; }
+        .btn-success { background-color: var(--success-color); color: white; }
+
+        .status-badge {
+            text-align: center;
+            font-weight: bold;
+            margin-top: 5px;
+            min-height: 24px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0,0,0,0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: var(--primary-color);
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .result-box {
+            background-color: #f1f5f9;
+            padding: 15px;
+            border-radius: 8px;
+            border-right: 4px solid var(--primary-color);
+        }
+
+        .result-box h3 {
+            font-size: 1rem;
+            margin-bottom: 8px;
+            color: #334155;
+        }
+
+        .result-box p, .result-box ul {
+            font-size: 0.95rem;
+            color: #0f172a;
+        }
+
+        .result-box ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .result-box li {
+            margin-bottom: 4px;
+        }
+
+        .download-link {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 15px;
+            background-color: #10b981;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        .download-link:hover {
+            background-color: #059669;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>منظومة تحليل الفيديو متعدد الوسائط</h1>
+
+    <!-- إعدادات الاتصال -->
+    <div class="card">
+        <h2>1. إعدادات السيرفر (Ngrok)</h2>
+        <div class="form-group">
+            <label for="apiLink">رابط Ngrok الحالي:</label>
+            <input type="text" id="apiLink" placeholder="https://xxxx-xx-xx-xx.ngrok-free.app" value="">
+        </div>
+    </div>
+
+    <!-- اختيار مصدر الفيديو -->
+    <div class="card">
+        <h2>2. اختيار مصدر الفيديو</h2>
+        
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchMode('upload')">رفع ملف فيديو</button>
+            <button class="tab-btn" onclick="switchMode('webcam')">تسجيل عبر الكاميرا</button>
+        </div>
+
+        <!-- خيار الرفع -->
+        <div id="uploadSection">
+            <div class="form-group">
+                <input type="file" id="videoFileInput" accept="video/*">
+            </div>
+        </div>
+
+        <!-- خيار التسجيل الحي -->
+        <div id="webcamSection" style="display: none;">
+            <div class="media-container">
+                <video id="webcamPreview" autoplay playsinline muted></video>
+            </div>
+            <div class="controls">
+                <button id="startCamBtn" class="btn-primary" onclick="initWebcam()">تشغيل الكاميرا</button>
+                <button id="startRecBtn" class="btn-danger" onclick="startRecording()" disabled>بدء التسجيل</button>
+                <button id="stopRecBtn" class="btn-primary" onclick="stopRecording()" disabled>إيقاف التسجيل</button>
+            </div>
+            <div id="recordingStatus" class="status-badge"></div>
+        </div>
+
+        <!-- معينة الفيديو المحدد -->
+        <div id="previewSection" style="display: none; margin-top: 15px;">
+            <h3>معاينة الفيديو الجاهز للتحليل:</h3>
+            <div class="media-container" style="height: 280px; margin-top: 10px;">
+                <video id="finalPreview" controls></video>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <button id="analyzeBtn" class="btn-success" onclick="uploadAndAnalyze()" style="width: 100%; max-width: 300px; font-size: 1.1rem;">إرسال وبدء التحليل</button>
+        </div>
+    </div>
+
+    <!-- مؤشر التحميل -->
+    <div id="loadingSpinner" class="loading card">
+        <div class="spinner"></div>
+        <p>جاري معالجة الفيديو واستخراج النص، تحليل الصوت، اللهجة، وتعبير الوجه...</p>
+        <small style="color: #64748b;">قد يستغرق هذا بضع دقائق بناءً على طول الفيديو وصلاحيات Colab</small>
+    </div>
+
+    <!-- عرض النتائج -->
+    <div id="resultsCard" class="card" style="display: none;">
+        <h2>3. نتائج التحليل</h2>
+        
+        <div class="results-grid">
+            <div class="result-box">
+                <h3>📜 النص المفرغ (Whisper)</h3>
+                <p id="resText">-</p>
+            </div>
+
+            <div class="result-box">
+                <h3>🎙️ عاطفة الصوت</h3>
+                <p id="resAudioEmotion">-</p>
+            </div>
+
+            <div class="result-box">
+                <h3>🌍 تحليل اللهجة</h3>
+                <p id="resDialectCountry">-</p>
+                <p id="resDialectSub">-</p>
+            </div>
+
+            <div class="result-box">
+                <h3>🎭 تعابير الوجه (DeepFace)</h3>
+                <p><strong>العاطفة السائدة:</strong> <span id="resFaceDominant">-</span></p>
+                <div style="margin-top: 5px;">
+                    <strong>التوزيع:</strong>
+                    <ul id="resFaceDist"></ul>
+                </div>
+            </div>
+        </div>
+
+        <div id="downloadContainer" style="text-align: center; margin-top: 20px;"></div>
+    </div>
+</div>
+
+<script>
+    let currentMode = 'upload';
+    let mediaStream = null;
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let selectedFileBlob = null;
+
+    // التبديل بين الرفع والكاميرا
+    function switchMode(mode) {
+        currentMode = mode;
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        
+        if (mode === 'upload') {
+            event.target.classList.add('active');
+            document.getElementById('uploadSection').style.display = 'block';
+            document.getElementById('webcamSection').style.display = 'none';
+            stopWebcam();
+        } else {
+            event.target.classList.add('active');
+            document.getElementById('uploadSection').style.display = 'none';
+            document.getElementById('webcamSection').style.display = 'block';
+        }
+        resetPreview();
+    }
+
+    // إعداد الكاميرا
+    async function initWebcam() {
+        try {
+            mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            const videoElem = document.getElementById('webcamPreview');
+            videoElem.srcObject = mediaStream;
+            
+            document.getElementById('startCamBtn').disabled = true;
+            document.getElementById('startRecBtn').disabled = false;
+            document.getElementById('recordingStatus').innerText = "الكاميرا جاهزة للتسجيل";
+            document.getElementById('recordingStatus').style.color = "var(--success-color)";
+        } catch (err) {
+            alert("تعذر الوصول إلى الكاميرا والمايكروفون: " + err.message);
+        }
+    }
+
+    // إيقاف الكاميرا
+    function stopWebcam() {
+        if (mediaStream) {
+            mediaStream.getTracks().forEach(track => track.stop());
+            mediaStream = null;
+        }
+        document.getElementById('startCamBtn').disabled = false;
+        document.getElementById('startRecBtn').disabled = true;
+        document.getElementById('stopRecBtn').disabled = true;
+        document.getElementById('recordingStatus').innerText = "";
+    }
+
+    // بدء التسجيل
+    function startRecording() {
+        recordedChunks = [];
+        let options = { mimeType: 'video/webm' };
+        
+        if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
+            options = { mimeType: 'video/webm;codecs=vp9' };
+        } else if (MediaRecorder.isTypeSupported('video/mp4')) {
+            options = { mimeType: 'video/mp4' };
+        }
+
+        try {
+            mediaRecorder = new MediaRecorder(mediaStream, options);
+        } catch (e) {
+            mediaRecorder = new MediaRecorder(mediaStream);
+        }
+
+        mediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) recordedChunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = () => {
+            selectedFileBlob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'video/webm' });
+            showPreview(URL.createObjectURL(selectedFileBlob));
+            document.getElementById('recordingStatus').innerText = "✅ تم حفظ التسجيل بنجاح";
+        };
+
+        mediaRecorder.start();
+        document.getElementById('startRecBtn').disabled = true;
+        document.getElementById('stopRecBtn').disabled = false;
+        document.getElementById('recordingStatus').innerText = "🔴 جاري التسجيل الآن...";
+        document.getElementById('recordingStatus').style.color = "var(--error-color)";
+    }
+
+    // إيقاف التسجيل
+    function stopRecording() {
+        if (mediaRecorder && mediaRecorder.state !== "inactive") {
+            mediaRecorder.stop();
+        }
+        document.getElementById('startRecBtn').disabled = false;
+        document.getElementById('stopRecBtn').disabled = true;
+    }
+
+    // معاينة الملف المرفوع أو المسجل
+    document.getElementById('videoFileInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            selectedFileBlob = file;
+            showPreview(URL.createObjectURL(file));
+        }
+    });
+
+    function showPreview(url) {
+        const previewSec = document.getElementById('previewSection');
+        const videoElem = document.getElementById('finalPreview');
+        videoElem.src = url;
+        previewSec.style.display = 'block';
+    }
+
+    function resetPreview() {
+        selectedFileBlob = null;
+        document.getElementById('previewSection').style.display = 'none';
+        document.getElementById('finalPreview').src = '';
+        document.getElementById('videoFileInput').value = '';
+    }
+
+    // إرسال الفيديو إلى السيرفر عبر Ngrok
+    async function uploadAndAnalyze() {
+        const inputElement = document.getElementById("apiLink");
+        const apiLink = inputElement ? inputElement.value.trim().replace(/\/+$/, "") : "";
+
+        // 1. التحقق من المدخلات
+        if (!apiLink) {
+            alert("⚠️ يرجى إدخال رابط Ngrok أولاً في الخانة المخصصة.");
+            return;
+        }
+
+        if (!selectedFileBlob) {
+            alert("⚠️ يرجى اختيار فيديو أو تسجيله عبر الكاميرا أولاً.");
+            return;
+        }
+
+        // 2. إظهار مؤشر التحميل وإخفاء النتائج القديمة
+        document.getElementById('loadingSpinner').style.display = 'block';
+        document.getElementById('resultsCard').style.display = 'none';
+
+        const formData = new FormData();
+        formData.append("file", selectedFileBlob, "video.webm");
+
+        try {
+            // 3. إرسال الطلب إلى السيرفر
+            const response = await fetch(`${apiLink}/predict-video`, {
+                method: "POST",
+                headers: {
+                    "ngrok-skip-browser-warning": "true"
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error(`خطأ من السيرفر (كود: ${response.status})`);
+            }
+
+            const result = await response.json();
+            console.log("Analysis Result:", result);
+
+            // 4. عرض النتائج على الواجهة
+            displayResults(result, apiLink);
+
+        } catch (error) {
+            console.error("Analysis Error:", error);
+            alert("❌ فشلت العملية: " + error.message + "\nتأكد من أن كود Python/Colab يعمل وأن الرابط صحيح.");
+        } finally {
+            // 5. إخفاء مؤشر التحميل دائمًا بعد الانتهاء
+            document.getElementById('loadingSpinner').style.display = 'none';
+        }
+    }
+    // عرض النتائج على الواجهة
+    function displayResults(data, baseUrl) {
+        document.getElementById('resultsCard').style.display = 'block';
+
+        // 1. النص المفرغ
+        document.getElementById('resText').innerText = data.النص_المفرغ || "لا يوجد نص مفرغ";
+
+        // 2. عاطفة الصوت
+        document.getElementById('resAudioEmotion').innerText = data.عاطفة_الصوت || "غير محدد";
+
+        // 3. تحليل اللهجة
+        if (data.تحليل_اللهجة) {
+            document.getElementById('resDialectCountry').innerText = "الدولة: " + (data.تحليل_اللهجة.الدولة || "غير محدد");
+            document.getElementById('resDialectSub').innerText = data.تحليل_اللهجة.المحافظة_السورية ? 
+                "المحافظة: " + data.تحليل_اللهجة.المحافظة_السورية : "";
+        }
+
+        // 4. تعابير الوجه
+        if (data.ملخص_تحليل_تعبير_الوجه) {
+            const facial = data.ملخص_تحليل_تعبير_الوجه;
+            document.getElementById('resFaceDominant').innerText = facial.العاطفة_الرئيسية_السائدة || "محايد";
+            
+            const distList = document.getElementById('resFaceDist');
+            distList.innerHTML = '';
+            
+            if (facial.توزيع_النسب_المئوية_للإيماءات) {
+                for (const [emo, pct] of Object.entries(facial.توزيع_النسب_المئوية_للإيماءات)) {
+                    const li = document.createElement('li');
+                    li.innerText = `• ${emo}: ${pct}%`;
+                    distList.appendChild(li);
+                }
+            }
+        }
+
+        // 5. رابط تحميل الفيديو الناتج
+        const downloadContainer = document.getElementById('downloadContainer');
+        downloadContainer.innerHTML = '';
+        if (data.رابط_تحميل_الفيديو) {
+            const fullDownloadUrl = `${baseUrl}${data.رابط_تحميل_الفيديو}`;
+            const downloadBtn = document.createElement('a');
+            downloadBtn.href = fullDownloadUrl;
+            downloadBtn.target = '_blank';
+            downloadBtn.className = 'download-link';
+            downloadBtn.innerText = '🎬 معاينة / تحميل الفيديو المعالج بالمؤشرات';
+            downloadContainer.appendChild(downloadBtn);
+        }
+        
+        // التمرير التلقائي إلى النتائج
+        document.getElementById('resultsCard').scrollIntoView({ behavior: 'smooth' });
+    }
+</script>
+
+</body>
+</html>
