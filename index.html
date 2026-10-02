@@ -442,20 +442,27 @@
 
     // إرسال الفيديو إلى السيرفر عبر Ngrok
     async function uploadAndAnalyze() {
-        // 1. جلب رابط Ngrok بالشكل الصحيح (.value)
-        const inputElement = document.getElementById("apiLinkInput"); // تأكد من مطابقة الـ ID مع عنصر الـ HTML لديك
-        const apiLink = inputElement ? inputElement.value.trim() : "";
+        // 1. Fetch the input element using the correct ID ("apiLink")
+        const inputElement = document.getElementById("apiLink");
+        // Strip trailing slashes if pasted by the user
+        const apiLink = inputElement ? inputElement.value.trim().replace(/\/+$/, "") : "";
 
-       
+        if (!apiLink) {
+            alert("يرجى إدخال رابط Ngrok أولاً");
+            return;
+        }
+
+        if (!selectedFileBlob) {
+            alert("يرجى اختيار أو تسجيل فيديو أولاً");
+            return;
+        }
 
         const formData = new FormData();
-        formData.append("file", selectedFileBlob, "video.webm"); // افترضنا أن اسم متغير الفيديو لديك هو videoBlob
+        formData.append("file", selectedFileBlob, "video.webm");
 
         try {
-            // 2. إرسال الطلب لرابط Ngrok مع ترويسة تجاوز التحذير
-            const response = await fetch(`https://cc7c-34-145-72-21.ngrok-free.app/predict-video`, {
-            //const response = await fetch(`${apiLink}/predict-video`, {
-            
+            // 2. Send request using the dynamic apiLink variable
+            const response = await fetch(`${apiLink}/predict-video`, {
                 method: "POST",
                 headers: {
                     "ngrok-skip-browser-warning": "true"
@@ -470,11 +477,14 @@
             const result = await response.json();
             console.log("Analysis Result:", result);
 
+            // Display results on interface
+            displayResults(result, apiLink);
+
         } catch (error) {
             console.error("Analysis Error:", error);
+            alert("حدث خطأ أثناء الاتصال بالسيرفر: " + error.message);
         }
     }
-
     // عرض النتائج على الواجهة
     function displayResults(data, baseUrl) {
         document.getElementById('resultsCard').style.display = 'block';
