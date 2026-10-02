@@ -193,7 +193,7 @@
             color: #334155;
         }
 
-        .result-box p, .result-box ul {
+        .result-box p, .result-box ul, .result-box div {
             font-size: 0.95rem;
             color: #0f172a;
         }
@@ -228,7 +228,7 @@
 <div class="container">
     <h1>منظومة تحليل الفيديو متعدد الوسائط</h1>
 
-    <!-- إعدادات الاتصال -->
+    <!-- 1. إعدادات السيرفر -->
     <div class="card">
         <h2>1. إعدادات السيرفر (Ngrok)</h2>
         <div class="form-group">
@@ -237,13 +237,13 @@
         </div>
     </div>
 
-    <!-- اختيار مصدر الفيديو -->
+    <!-- 2. اختيار مصدر الفيديو -->
     <div class="card">
         <h2>2. اختيار مصدر الفيديو</h2>
         
         <div class="tabs">
-            <button class="tab-btn active" onclick="switchMode('upload')">رفع ملف فيديو</button>
-            <button class="tab-btn" onclick="switchMode('webcam')">تسجيل عبر الكاميرا</button>
+            <button class="tab-btn active" onclick="switchMode('upload', event)">رفع ملف فيديو</button>
+            <button class="tab-btn" onclick="switchMode('webcam', event)">تسجيل عبر الكاميرا</button>
         </div>
 
         <!-- خيار الرفع -->
@@ -266,7 +266,7 @@
             <div id="recordingStatus" class="status-badge"></div>
         </div>
 
-        <!-- معينة الفيديو المحدد -->
+        <!-- معاينة الفيديو المحدد -->
         <div id="previewSection" style="display: none; margin-top: 15px;">
             <h3>معاينة الفيديو الجاهز للتحليل:</h3>
             <div class="media-container" style="height: 280px; margin-top: 10px;">
@@ -282,11 +282,11 @@
     <!-- مؤشر التحميل -->
     <div id="loadingSpinner" class="loading card">
         <div class="spinner"></div>
-        <p>جاري معالجة الفيديو واستخراج النص، تحليل الصوت، اللهجة، وتعبير الوجه...</p>
+        <p>جاري معالجة الفيديو واستخراج النص، تحليل الصوت، اللهجة، وتعابير الوجه والديموغرافيا...</p>
         <small style="color: #64748b;">قد يستغرق هذا بضع دقائق بناءً على طول الفيديو وصلاحيات Colab</small>
     </div>
 
-    <!-- عرض النتائج -->
+    <!-- 3. عرض النتائج -->
     <div id="resultsCard" class="card" style="display: none;">
         <h2>3. نتائج التحليل</h2>
         
@@ -308,10 +308,10 @@
             </div>
 
             <div class="result-box">
-                <h3>🎭 تعابير الوجه (DeepFace)</h3>
-                <p><strong>العاطفة السائدة:</strong> <span id="resFaceDominant">-</span></p>
-                <div style="margin-top: 5px;">
-                    <strong>التوزيع:</strong>
+                <h3>🎭 تعابير الوجه والديموغرافيا</h3>
+                <div id="resFaceDominant">-</div>
+                <div style="margin-top: 10px;">
+                    <strong>توزيع الإيماءات:</strong>
                     <ul id="resFaceDist"></ul>
                 </div>
             </div>
@@ -329,17 +329,16 @@
     let selectedFileBlob = null;
 
     // التبديل بين الرفع والكاميرا
-    function switchMode(mode) {
+    function switchMode(mode, evt) {
         currentMode = mode;
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        if (evt && evt.target) evt.target.classList.add('active');
         
         if (mode === 'upload') {
-            event.target.classList.add('active');
             document.getElementById('uploadSection').style.display = 'block';
             document.getElementById('webcamSection').style.display = 'none';
             stopWebcam();
         } else {
-            event.target.classList.add('active');
             document.getElementById('uploadSection').style.display = 'none';
             document.getElementById('webcamSection').style.display = 'block';
         }
@@ -399,6 +398,7 @@
             selectedFileBlob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'video/webm' });
             showPreview(URL.createObjectURL(selectedFileBlob));
             document.getElementById('recordingStatus').innerText = "✅ تم حفظ التسجيل بنجاح";
+            document.getElementById('recordingStatus').style.color = "var(--success-color)";
         };
 
         mediaRecorder.start();
@@ -417,7 +417,7 @@
         document.getElementById('stopRecBtn').disabled = true;
     }
 
-    // معاينة الملف المرفوع أو المسجل
+    // معاينة الملف المرفوع
     document.getElementById('videoFileInput').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
@@ -440,12 +440,11 @@
         document.getElementById('videoFileInput').value = '';
     }
 
-    // إرسال الفيديو إلى السيرفر عبر Ngrok
+    // إرسال الفيديو للتحليل عبر Ngrok
     async function uploadAndAnalyze() {
         const inputElement = document.getElementById("apiLink");
         const apiLink = inputElement ? inputElement.value.trim().replace(/\/+$/, "") : "";
 
-        // 1. التحقق من المدخلات
         if (!apiLink) {
             alert("⚠️ يرجى إدخال رابط Ngrok أولاً في الخانة المخصصة.");
             return;
@@ -456,7 +455,6 @@
             return;
         }
 
-        // 2. إظهار مؤشر التحميل وإخفاء النتائج القديمة
         document.getElementById('loadingSpinner').style.display = 'block';
         document.getElementById('resultsCard').style.display = 'none';
 
@@ -464,7 +462,6 @@
         formData.append("file", selectedFileBlob, "video.webm");
 
         try {
-            // 3. إرسال الطلب إلى السيرفر
             const response = await fetch(`${apiLink}/predict-video`, {
                 method: "POST",
                 headers: {
@@ -474,24 +471,23 @@
             });
 
             if (!response.ok) {
-                throw new Error(`خطأ من السيرفر (كود: ${response.status})`);
+                throw new Error(`خطأ في الاستجابة من السيرفر: ${response.status}`);
             }
 
             const result = await response.json();
             console.log("Analysis Result:", result);
 
-            // 4. عرض النتائج على الواجهة
             displayResults(result, apiLink);
 
         } catch (error) {
             console.error("Analysis Error:", error);
-            alert("❌ فشلت العملية: " + error.message + "\nتأكد من أن كود Python/Colab يعمل وأن الرابط صحيح.");
+            alert("❌ فشلت العملية: " + error.message + "\nتأكد من أن كود Colab يعمل وأن رابط Ngrok صحيح.");
         } finally {
-            // 5. إخفاء مؤشر التحميل دائمًا بعد الانتهاء
             document.getElementById('loadingSpinner').style.display = 'none';
         }
     }
-    // عرض النتائج على الواجهة
+
+    // عرض النتائج التفصيلية على الواجهة
     function displayResults(data, baseUrl) {
         document.getElementById('resultsCard').style.display = 'block';
 
@@ -508,32 +504,43 @@
                 "المحافظة: " + data.تحليل_اللهجة.المحافظة_السورية : "";
         }
 
-        // 4. تعابير الوجه
+        // 4. تعابير الوجه والديموغرافيا
         if (data.ملخص_تحليل_تعبير_الوجه) {
             const facial = data.ملخص_تحليل_تعبير_الوجه;
+            
             document.getElementById('resFaceDominant').innerHTML = `
-                <strong>العاطفة:</strong> ${facial.العاطفة_الرئيسية_السائدة} <br>
-                <strong>العمر التقريبي:</strong> ${facial.العمر_التقريبي} سنة <br>
-                <strong>الجنس:</strong> ${facial.الجنس} <br>
-                <strong>العرق / الملامح:</strong> ${facial.العرق_التطابق} `;
+                <div style="line-height: 1.8;">
+                    <strong>العاطفة السائدة:</strong> ${facial.العاطفة_الرئيسية_السائدة || "محايد"}<br>
+                    <strong>العمر التقريبي:</strong> ${facial.العمر_التقريبي ? facial.العمر_التقريبي + ' سنة' : "غير محدد"}<br>
+                    <strong>الجنس:</strong> ${facial.الجنس || "غير محدد"}<br>
+                    <strong>العرق / الملامح:</strong> ${facial.العرق_التطابق || "غير محدد"}
+                </div>
+            `;
+            
+            const distList = document.getElementById('resFaceDist');
+            distList.innerHTML = '';
+            
+            if (facial.توزيع_النسب_المئوية_للإيماءات) {
+                for (const [emo, pct] of Object.entries(facial.توزيع_النسب_المئوية_للإيماءات)) {
+                    const li = document.createElement('li');
+                    li.innerText = `• ${emo}: ${pct}%`;
+                    distList.appendChild(li);
                 }
             }
         }
 
-        // 5. رابط تحميل الفيديو الناتج
+        // 5. رابط تحميل أو معاينة الفيديو الناتج
         const downloadContainer = document.getElementById('downloadContainer');
         downloadContainer.innerHTML = '';
-        if (data.رابط_تحميل_الفيديو) {
-            const fullDownloadUrl = `${baseUrl}${data.رابط_تحميل_الفيديو}`;
+        if (data.مسار_الفيديو_النهائي) {
             const downloadBtn = document.createElement('a');
-            downloadBtn.href = fullDownloadUrl;
+            downloadBtn.href = `${baseUrl}/predict-video`;
             downloadBtn.target = '_blank';
             downloadBtn.className = 'download-link';
-            downloadBtn.innerText = '🎬 معاينة / تحميل الفيديو المعالج بالمؤشرات';
+            downloadBtn.innerText = '🎬 تم حفظ الفيديو المعالج في بيئة Colab';
             downloadContainer.appendChild(downloadBtn);
         }
         
-        // التمرير التلقائي إلى النتائج
         document.getElementById('resultsCard').scrollIntoView({ behavior: 'smooth' });
     }
 </script>
