@@ -142,7 +142,7 @@
         }
 
         .btn-primary { background-color: var(--primary-color); color: white; }
-        .btn-danger { background-color: var(---color); color: white; }
+        .btn-danger {background-color: var(--error-color);}
         .btn-success { background-color: var(--success-color); color: white; }
 
         .status-badge {
@@ -405,7 +405,7 @@
         document.getElementById('startRecBtn').disabled = true;
         document.getElementById('stopRecBtn').disabled = false;
         document.getElementById('recordingStatus').innerText = "🔴 جاري التسجيل الآن...";
-        document.getElementById('recordingStatus').style.color = "var(---color)";
+        document.getElementById('recordingStatus').style.color = "var(--error-color)";
     }
 
     // إيقاف التسجيل
@@ -442,60 +442,95 @@
 
     // إرسال الفيديو للتحليل عبر Ngrok
     async function uploadAndAnalyze() {
-        const inputElement = document.getElementById("apiLink");
-        const apiLink = inputElement ? inputElement.value.trim().replace(/\/+$/, "") : "";
 
-        if (!apiLink) {
-            alert("⚠️ يرجى إدخال رابط Ngrok أولاً في الخانة المخصصة.");
-            return;
-        }
+    const apiLink = document
+        .getElementById("apiLink")
+        .value
+        .trim()
+        .replace(/\/+$/, "");
 
-        if (!selectedFileBlob) {
-            alert("⚠️ يرجى اختيار فيديو أو تسجيله عبر الكاميرا أولاً.");
-            return;
-        }
+    if (!apiLink) {
+        alert("يرجى إدخال رابط Ngrok");
+        return;
+    }
 
-        document.getElementById('loadingSpinner').style.display = 'block';
-        document.getElementById('resultsCard').style.display = 'none';
+    if (!selectedFileBlob) {
+        alert("يرجى اختيار أو تسجيل فيديو");
+        return;
+    }
 
-        const formData = new FormData();
-        formData.append("file", selectedFileBlob, "video.webm");
+    document.getElementById("loadingSpinner").style.display = "block";
+    document.getElementById("resultsCard").style.display = "none";
 
-        try {
-            console.log("Sending request to:");
-            console.log(`${apiLink}/predict-video`);
-            const response = await fetch(`${apiLink}/predict-video`, {
+    const formData = new FormData();
+    formData.append("file", selectedFileBlob);
+
+    try {
+
+        console.log(
+            "Sending request to:",
+            `${apiLink}/predict-video`
+        );
+
+        const response = await fetch(
+            `${apiLink}/predict-video`,
+            {
                 method: "POST",
                 headers: {
                     "ngrok-skip-browser-warning": "true"
                 },
                 body: formData
-            });
-
-            if (!response.ok) {
-                throw new (`خطأ في الاستجابة من السيرفر: ${response.status}`);
             }
+        );
 
-            const text = await response.text();
+        console.log(
+            "HTTP STATUS:",
+            response.status
+        );
 
-            console.log("RAW RESPONSE:");
-            console.log(text);
+        const text = await response.text();
 
-            const result = JSON.parse(text);
+        console.log("RAW RESPONSE:");
+        console.log(text);
 
-            displayResults(result, apiLink);
-        catch (error) {
-            console.error("Analysis Error:");
-            console.error(error);
-            console.error(error.stack);
+        if (!response.ok) {
 
-            alert(
-                "ERROR:\n" +
-                error +
-                "\n\n" +
-                error.stack
-                );
+            throw new Error(
+                `HTTP ${response.status}\n${text}`
+            );
+
         }
+
+        const result = JSON.parse(text);
+
+        console.log(result);
+
+        displayResults(
+            result,
+            apiLink
+        );
+
+    }
+    catch (error) {
+
+        console.error(
+            "Analysis Error:",
+            error
+        );
+
+        alert(
+            "حدث خطأ:\n\n" +
+            error.message
+        );
+
+    }
+    finally {
+
+        document.getElementById(
+            "loadingSpinner"
+        ).style.display = "none";
+
+    }
     }
 
     // عرض النتائج التفصيلية على الواجهة
