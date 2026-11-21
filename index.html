@@ -142,7 +142,7 @@
         }
 
         .btn-primary { background-color: var(--primary-color); color: white; }
-        .btn-danger { background-color: var(--error-color); color: white; }
+        .btn-danger { background-color: var(---color); color: white; }
         .btn-success { background-color: var(--success-color); color: white; }
 
         .status-badge {
@@ -405,7 +405,7 @@
         document.getElementById('startRecBtn').disabled = true;
         document.getElementById('stopRecBtn').disabled = false;
         document.getElementById('recordingStatus').innerText = "🔴 جاري التسجيل الآن...";
-        document.getElementById('recordingStatus').style.color = "var(--error-color)";
+        document.getElementById('recordingStatus').style.color = "var(---color)";
     }
 
     // إيقاف التسجيل
@@ -473,7 +473,7 @@
             });
 
             if (!response.ok) {
-                throw new Error(`خطأ في الاستجابة من السيرفر: ${response.status}`);
+                throw new (`خطأ في الاستجابة من السيرفر: ${response.status}`);
             }
 
             const text = await response.text();
@@ -484,11 +484,17 @@
             const result = JSON.parse(text);
 
             displayResults(result, apiLink);
-        } catch (error) {
-            console.error("Analysis Error:", error);
-            alert("❌ فشلت العملية: " + error.message + "\nتأكد من أن كود Colab يعمل وأن رابط Ngrok صحيح.");
-        } finally {
-            document.getElementById('loadingSpinner').style.display = 'none';
+        catch (error) {
+            console.error("Analysis Error:");
+            console.error(error);
+            console.error(error.stack);
+
+            alert(
+                "ERROR:\n" +
+                error +
+                "\n\n" +
+                error.stack
+                );
         }
     }
 
