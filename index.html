@@ -462,6 +462,8 @@
         formData.append("file", selectedFileBlob, "video.webm");
 
         try {
+            console.log("Sending request to:");
+            console.log(`${apiLink}/predict-video`);
             const response = await fetch(`${apiLink}/predict-video`, {
                 method: "POST",
                 headers: {
