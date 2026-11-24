@@ -303,6 +303,7 @@
 
             <div class="result-box">
                 <h3>🌍 تحليل اللهجة</h3>
+                <ul id="dialectTop3"></ul>
                 <p id="resDialectCountry">-</p>
                 <p id="resDialectSub">-</p>
             </div>
@@ -545,11 +546,20 @@
 
         // 3. تحليل اللهجة
         if (data.تحليل_اللهجة) {
-            document.getElementById('resDialectCountry').innerText = "الدولة: " + (data.تحليل_اللهجة.الدولة || "غير محدد");
-            document.getElementById('resDialectSub').innerText = data.تحليل_اللهجة.المحافظة_السورية ? 
-                "المحافظة: " + data.تحليل_اللهجة.المحافظة_السورية : "";
+            document.getElementById('resDialectCountry').innerText ="الدولة: " + (data.تحليل_اللهجة?.الدولة_الأكثر_احتمالاً || "غير محدد");
+            document.getElementById('resDialectSub').innerText = (data.تحليل_اللهجة?.المحافظة_السورية )? "المحافظة: " + data.تحليل_اللهجة.المحافظة_السورية : "";
         }
-
+        const top3 = document.getElementById( "dialectTop3" );
+        top3.innerHTML = "";
+        if (data.تحليل_اللهجة?.أفضل_3_دول) {
+                data.تحليل_اللهجة
+                .أفضل_3_دول
+                .forEach(item => {
+                    const li = document.createElement("li");
+                    li.innerText = `${item.country_ar} (${item.score})`;
+                    top3.appendChild(li);
+            });
+        }
         // 4. تعابير الوجه والديموغرافيا
         if (data.ملخص_تحليل_تعبير_الوجه) {
             const facial = data.ملخص_تحليل_تعبير_الوجه;
